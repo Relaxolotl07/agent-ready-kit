@@ -118,6 +118,31 @@ A long agent session degrades (context fills, attention drifts). Design for
 
 ---
 
+## Ingredient 5 — Parallel-ready (when more than one agent runs at once)
+
+Ingredients 1–4 already lower coordination cost (any instance onboards fast and
+self-verifies). To actually run agents/branches in *parallel* without
+merge-fighting, also:
+
+- **One branch per track, each in its own worktree/clone** — never a shared
+  working tree. Note a fresh worktree lacks git-ignored deps (virtualenvs,
+  `.env`, local config); document how each track obtains them.
+- **Map the seams.** A `CODEOWNERS` (or `SEAMS.md`) marking which directories are
+  **disjoint** (safe to fork — e.g. backend ↔ frontend ↔ infra) vs. **shared /
+  sequential** (schema, migrations, cross-cutting hot files).
+- **Single-lane the serialization points.** Linear things — a DB migration chain,
+  a shared lockfile, a global registry/index — take **one in-flight change at a
+  time**, or one track owns them per batch.
+- **Generated files are regenerated at integration, never hand-merged.** Mark them
+  (`linguist-generated` in `.gitattributes`) and document the regenerate command.
+- **One integration owner** merges branches one at a time and re-runs the **full
+  gates + smoke on the merged result** — green-in-isolation can break combined.
+- **Specs are the contract** that keeps tracks from diverging.
+
+Rule of thumb: **parallelize disjoint trees, serialize shared state.**
+
+---
+
 ## The checklist (copy into an issue)
 
 ```
@@ -136,6 +161,8 @@ A long agent session degrades (context fills, attention drifts). Design for
 [ ] A verification ritual is written down (snapshot-diff + smoke).
 [ ] Existing violations grandfathered + listed in known-debt (not blocking).
 [ ] A kickoff-prompt template for handing work to a fresh instance.
+[ ] Parallel seams mapped (CODEOWNERS/SEAMS); migrations + generated files have a
+    single-lane + regenerate-at-integration rule.
 ```
 
 ---
@@ -153,3 +180,6 @@ A long agent session degrades (context fills, attention drifts). Design for
 - **Letting an agent self-regulate safety** — encode safety in gates + a ritual,
   not in "the model will be careful."
 - **Blocking all work on legacy violations** — grandfather + chip away instead.
+- **Forking parallel work onto shared state** (same migration chain / hot files /
+  generated artifacts) — you'll merge-fight. Parallelize disjoint trees,
+  serialize shared state (Ingredient 5).
