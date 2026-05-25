@@ -1,0 +1,52 @@
+# Example CI gate workflow for a Python repo. Adapt paths/tools to your project.
+# Each job encodes a rule from CLAUDE.md so violations fail loudly. Mirror these
+# in a single local command (e.g. a Makefile `check` target) so local == CI.
+name: gates
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    name: Lint, format, dead code, security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements-dev.txt      # ruff, vulture, bandit, import-linter, pytest, ...
+      - run: ruff check .                              # lint (+ complexity ceiling via mccabe)
+      - run: ruff format --check .                     # formatting
+      - run: vulture                                   # dead code (config in pyproject)
+      - run: bandit -ll -r <src> -q                    # security smells
+      - run: lint-imports                              # architecture contracts (the layering)
+
+  tests:
+    name: Tests (offline / $0 — record external calls)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest                                    # cassettes replay; no network, no spend
+
+  docs-fresh:
+    name: Doc-freshness (the map can't go stale)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python scripts/dump_surface.py --write    # regenerate the committed public-surface snapshot
+      - run: git diff --exit-code docs/generated        # fail if it drifted from the code
+
+  migrations:
+    name: Models match migrations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: alembic upgrade head && alembic check      # schema == models

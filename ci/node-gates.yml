@@ -1,0 +1,23 @@
+# Example CI gate workflow for a JS/TS repo (frontend or node service). Adapt to
+# your package manager / scripts. Mirror in one local command so local == CI.
+name: gates
+
+on: [push, pull_request]
+
+jobs:
+  frontend:
+    name: Lint, format, types, build, contract drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - run: npm run lint                         # eslint — 0 errors required
+      - run: npm run format:check                 # prettier --check
+      - run: npm run typecheck                    # tsc --noEmit (incl. typed API client vs schema)
+      - run: npm run build                         # it compiles
+      # Architecture boundaries (pick one): eslint-plugin-boundaries, or:
+      # - run: npx depcruise --validate .dependency-cruiser.js src
+      # Contract/doc-freshness drift (if you generate types from an API spec):
+      - run: npm run gen:api && git diff --exit-code <schema.d.ts>
