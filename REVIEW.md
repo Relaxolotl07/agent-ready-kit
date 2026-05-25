@@ -31,6 +31,33 @@ Run a review when one of these lands — not on a clock:
 
 Optional: one lightweight *sanity* pass per year even if quiet, to catch slow drift.
 
+## The capability-event bundle (one trigger, not many cadences)
+
+A model / Claude Code release should fire **one bundle**, not a dozen separate
+review rituals. On the event, run — cheapest first:
+
+1. **Re-tier models** (if you have a tiering harness): re-run your blind A/B +
+   cost-per-call log and move calls between smart/cheap tiers on the new
+   price/quality. *Knob.*
+2. **Re-baseline evals:** a new model (or judge) shifts pass/fail — refresh
+   thresholds + golden sets and reconsider the judge model, or the evals rot into
+   noise. *Knob.*
+3. **Scan the knobs** (~5–10 min each): prompts (can better instruction-following
+   let you *delete* scaffolding?); doc density / file budgets (bigger context →
+   load more, split less?); autonomy / sandbox / permission posture (**+ a security
+   re-check** — more autonomy = more injection/exfil surface); workflow
+   granularity (# of subagents, parallel seams, when to start fresh).
+4. **Architecture review:** run the full procedure below (self-audit + the
+   deep-research prompt + the change bar) — the *shape* question. Usually: it holds.
+5. **Record:** knob changes in the commit/log; shape changes as ADRs.
+
+> **Not everything shares this trigger.** Decisions driven by **scale/usage**
+> rather than agent capability — e.g. datastore or client-contract choices — get a
+> *scale-threshold* trigger instead (revisit when you cross X rows / Y users / Z
+> latency), with the same shape-vs-knob discipline. Reviewing the **product's own
+> AI features** (or an ops playbook) is a separate track on its own capability
+> trigger — same pattern, different subject.
+
 ## The review procedure
 
 1. **What changed?** (~15 min) Read the release notes; write the concrete
