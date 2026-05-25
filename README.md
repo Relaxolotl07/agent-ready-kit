@@ -38,6 +38,16 @@ matching `ci/*-gates.yml`, and follow [PLAYBOOK.md](PLAYBOOK.md).
 any repo run `/agent-ready` — it inspects the stack and drafts the tailored docs
 + a proposed gate set for your review.
 
+## Keeping it current
+
+Capabilities change; the system shouldn't churn every time. **[REVIEW.md](REVIEW.md)**
+is the maintenance layer: a *capability-triggered* (not calendar) review that
+separates the durable **shape** from re-tunable **knobs**, runs an empirical
+self-audit + a grounded deep-research pass
+([reviews/architecture-review-prompt.md](reviews/architecture-review-prompt.md)),
+and adopts changes only against a high **change bar** (default: leave the shape
+alone). Outcomes are recorded as ADRs so reviews build on each other.
+
 ## What touches what (safety)
 
 - The kit is **self-contained**; nothing here writes into your other repos.
